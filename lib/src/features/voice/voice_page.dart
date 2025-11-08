@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../common/services/speech_service.dart';
+import '../../common/theme/app_theme.dart';
+import '../../common/widgets/glass_container.dart';
+import '../../common/widgets/agent_orb.dart';
+import '../../common/widgets/audio_waveform.dart';
 
 class VoicePage extends StatefulWidget {
   const VoicePage({super.key});
@@ -32,11 +35,11 @@ class _VoicePageState extends State<VoicePage> {
 
         if (!initialized) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
+            SnackBar(
+              content: const Text(
                 'Speech recognition not available. Please check permissions.',
               ),
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.error,
             ),
           );
         } else {
@@ -51,7 +54,7 @@ class _VoicePageState extends State<VoicePage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Error: $error'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: AppTheme.error,
                   ),
                 );
               }
@@ -64,7 +67,7 @@ class _VoicePageState extends State<VoicePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to initialize speech recognition: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.error,
           ),
         );
       }
@@ -74,9 +77,9 @@ class _VoicePageState extends State<VoicePage> {
   Future<void> _toggleListening() async {
     if (!_isInitialized) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Speech recognition not initialized'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text('Speech recognition not initialized'),
+          backgroundColor: AppTheme.warning,
         ),
       );
       return;
@@ -84,13 +87,24 @@ class _VoicePageState extends State<VoicePage> {
 
     if (_speechService.isListening) {
       await _speechService.stopListening();
-      // Keep the last transcript
       setState(() {
         _transcript = _speechService.lastRecognizedWords;
       });
     } else {
       await _speechService.startListening();
     }
+  }
+
+  AgentOrbState _getOrbState() {
+    if (!_isInitialized) {
+      return AgentOrbState.idle;
+    }
+    if (_speechService.isListening) {
+      return _transcript.isNotEmpty
+          ? AgentOrbState.talking
+          : AgentOrbState.listening;
+    }
+    return AgentOrbState.idle;
   }
 
   @override
@@ -103,95 +117,80 @@ class _VoicePageState extends State<VoicePage> {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+    final orbState = _getOrbState();
+    final isListening = _speechService.isListening;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Voice to Text')),
-      body: SafeArea(
-        child: Column(
-          children: [
-            if (user != null)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                color: Colors.blue.shade50,
-                child: Row(
-                  children: [
-                    const Icon(Icons.person, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Logged in as: ${user.email}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: AppTheme.spacingXL),
+              // Agent Orb (centered)
+              AgentOrb(
+                state: orbState,
+                size: 140,
+                onTap: _isInitialized ? _toggleListening : null,
               ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text(
-                      'Transcript',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+              const SizedBox(height: AppTheme.spacingXL),
+              // Audio Waveform
+              if (_isInitialized)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingXL,
+                  ),
+                  child: AudioWaveform(isActive: isListening, height: 80),
+                )
+              else
+                const Padding(
+                  padding: EdgeInsets.all(AppTheme.spacingXL),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppTheme.accentPrimary,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(16.0),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey.shade300),
-                        ),
-                        child: SingleChildScrollView(
-                          child: Text(
-                            _transcript.isEmpty
-                                ? 'Tap the microphone button to start speaking...'
-                                : _transcript,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: _transcript.isEmpty
-                                  ? Colors.grey.shade600
-                                  : Colors.black87,
-                              height: 1.5,
+                  ),
+                ),
+              const SizedBox(height: AppTheme.spacingXL),
+              // Transcript Container
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingL,
+                  ),
+                  child: SizedBox(
+                    height: 300,
+                    child: GlassContainer(
+                      padding: const EdgeInsets.all(AppTheme.spacingL),
+                      child: _transcript.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Tap the orb to start speaking...',
+                                style: AppTheme.bodyMedium.copyWith(
+                                  color: AppTheme.textTertiary,
+                                ),
+                              ),
+                            )
+                          : SingleChildScrollView(
+                              child: Text(
+                                _transcript,
+                                style: AppTheme.bodyLarge.copyWith(
+                                  fontSize: 16,
+                                  height: 1.6,
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
                     ),
-                    const SizedBox(height: 24),
-                    if (!_isInitialized)
-                      const Center(child: CircularProgressIndicator()),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppTheme.spacingL),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _isInitialized ? _toggleListening : null,
-        backgroundColor: _speechService.isListening ? Colors.red : Colors.blue,
-        icon: Icon(
-          _speechService.isListening ? Icons.mic : Icons.mic_none,
-          size: 28,
-        ),
-        label: Text(
-          _speechService.isListening ? 'Stop Listening' : 'Start Listening',
-          style: const TextStyle(fontSize: 16),
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

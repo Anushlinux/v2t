@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../common/services/auth_repository.dart';
+import '../../common/theme/app_theme.dart';
+import '../../common/widgets/glass_container.dart';
+import '../../common/widgets/glass_text_field.dart';
+import '../../common/widgets/primary_button.dart';
+import '../../common/widgets/agent_orb.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final _authRepository = AuthRepository();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -51,92 +57,119 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign In')),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Icon(Icons.mic, size: 80, color: Colors.blue),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'Voice to Text',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 48),
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
-                      border: OutlineInputBorder(),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppTheme.spacingXXL),
+                    // Agent Orb Placeholder
+                    const Center(
+                      child: AgentOrb(state: AgentOrbState.idle, size: 100),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Please enter a valid email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock),
-                      border: OutlineInputBorder(),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
-                      }
-                      return null;
-                    },
-                  ),
-                  if (_errorMessage != null) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppTheme.spacingXL),
+                    // Title
                     Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: Colors.red, fontSize: 14),
+                      'Voice to Text',
+                      style: AppTheme.displaySmall,
                       textAlign: TextAlign.center,
                     ),
-                  ],
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _signIn,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    const SizedBox(height: AppTheme.spacingS),
+                    Text(
+                      'Sign in to continue',
+                      style: AppTheme.bodyMedium,
+                      textAlign: TextAlign.center,
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Sign In'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/register');
-                    },
-                    child: const Text('Don\'t have an account? Register'),
-                  ),
-                ],
+                    const SizedBox(height: AppTheme.spacingXXL),
+                    // Email Field
+                    GlassTextField(
+                      controller: _emailController,
+                      labelText: 'Email',
+                      hintText: 'Enter your email',
+                      keyboardType: TextInputType.emailAddress,
+                      prefixIcon: Icons.email_outlined,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        if (!value.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: AppTheme.spacingM),
+                    // Password Field
+                    GlassTextField(
+                      controller: _passwordController,
+                      labelText: 'Password',
+                      hintText: 'Enter your password',
+                      obscureText: _obscurePassword,
+                      prefixIcon: Icons.lock_outline,
+                      suffixIcon: _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      onSuffixTap: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: AppTheme.spacingM),
+                      GlassContainer(
+                        padding: const EdgeInsets.all(AppTheme.spacingM),
+                        child: Text(
+                          _errorMessage!,
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: AppTheme.error,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: AppTheme.spacingXL),
+                    // Sign In Button
+                    PrimaryButton(
+                      label: 'Sign In',
+                      onPressed: _isLoading ? null : _signIn,
+                      isLoading: _isLoading,
+                      icon: Icons.login,
+                    ),
+                    const SizedBox(height: AppTheme.spacingM),
+                    // Register Link
+                    Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
+                        child: Text(
+                          'Don\'t have an account? Register',
+                          style: AppTheme.bodyMedium.copyWith(
+                            color: AppTheme.accentPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppTheme.spacingXXL),
+                  ],
+                ),
               ),
             ),
           ),

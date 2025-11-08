@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../common/services/auth_repository.dart';
+import '../../common/theme/app_theme.dart';
+import '../../common/widgets/glass_container.dart';
+import '../../common/widgets/glass_button.dart';
+import '../../common/widgets/agent_orb.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -11,52 +15,98 @@ class HomePage extends StatelessWidget {
     final authRepository = AuthRepository();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.backgroundGradient),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.spacingL),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(Icons.check_circle, size: 80, color: Colors.green),
-                const SizedBox(height: 32),
-                const Text(
-                  'Welcome!',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                if (user != null) ...[
-                  Text(
-                    'Signed in as:',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                const SizedBox(height: AppTheme.spacingXXL),
+                // Welcome Section
+                Center(
+                  child: Column(
+                    children: [
+                      const AgentOrb(state: AgentOrbState.idle, size: 100),
+                      const SizedBox(height: AppTheme.spacingXL),
+                      Text(
+                        'Welcome!',
+                        style: AppTheme.displaySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppTheme.spacingS),
+                      if (user != null)
+                        Text(
+                          user.email ?? 'No email',
+                          style: AppTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    user.email ?? 'No email',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
+                ),
+                const SizedBox(height: AppTheme.spacingXXL),
+                // User Info Card
+                if (user != null)
+                  GlassContainer(
+                    padding: const EdgeInsets.all(AppTheme.spacingL),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Account Information',
+                          style: AppTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: AppTheme.spacingM),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.email_outlined,
+                              color: AppTheme.accentPrimary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: AppTheme.spacingS),
+                            Expanded(
+                              child: Text(
+                                user.email ?? 'No email',
+                                style: AppTheme.bodyLarge,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                ],
-                const SizedBox(height: 48),
-                ElevatedButton.icon(
+                const SizedBox(height: AppTheme.spacingXL),
+                // Action Cards
+                GlassContainer(
+                  padding: const EdgeInsets.all(AppTheme.spacingL),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Quick Actions', style: AppTheme.headlineSmall),
+                      const SizedBox(height: AppTheme.spacingM),
+                      Text(
+                        'Get started by using voice transcription',
+                        style: AppTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppTheme.spacingXL),
+                // Sign Out Button
+                GlassButton(
+                  label: 'Sign Out',
+                  icon: Icons.logout,
                   onPressed: () async {
                     await authRepository.signOut();
                     if (context.mounted) {
                       Navigator.pushReplacementNamed(context, '/login');
                     }
                   },
-                  icon: const Icon(Icons.logout),
-                  label: const Text('Sign Out'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 16,
-                    ),
-                  ),
+                  isPrimary: false,
                 ),
+                const SizedBox(height: AppTheme.spacingXXL),
               ],
             ),
           ),
