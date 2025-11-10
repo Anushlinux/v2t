@@ -177,7 +177,6 @@ class AppTheme {
         secondary: accentSecondary,
         tertiary: accentTertiary,
         surface: surfaceDark,
-        background: backgroundDark,
         error: error,
       ),
       textTheme: const TextTheme(

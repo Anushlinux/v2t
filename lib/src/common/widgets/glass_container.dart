@@ -37,6 +37,31 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget content = ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        child: Container(
+          width: width,
+          height: height,
+          decoration: BoxDecoration(
+            gradient:
+                gradient ??
+                LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(opacity),
+                    Colors.white.withOpacity(opacity * 0.5),
+                  ],
+                ),
+          ),
+          padding: padding,
+          child: child,
+        ),
+      ),
+    );
+
     final container = Container(
       width: width,
       height: height,
@@ -51,28 +76,7 @@ class GlassContainer extends StatelessWidget {
         ),
         boxShadow: shadows ?? AppTheme.softShadow,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient:
-                  gradient ??
-                  LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(opacity),
-                      Colors.white.withOpacity(opacity * 0.5),
-                    ],
-                  ),
-            ),
-            padding: padding,
-            child: child,
-          ),
-        ),
-      ),
+      child: content,
     );
 
     if (onTap != null) {

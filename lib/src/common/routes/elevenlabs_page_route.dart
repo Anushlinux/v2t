@@ -4,9 +4,8 @@ import 'package:flutter/material.dart';
 class ElevenLabsPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
 
-  ElevenLabsPageRoute({required this.page, RouteSettings? settings})
+  ElevenLabsPageRoute({required this.page, super.settings})
     : super(
-        settings: settings,
         pageBuilder:
             (
               BuildContext context,
